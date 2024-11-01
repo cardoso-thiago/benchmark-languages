@@ -8,12 +8,19 @@ var stopwatch = Stopwatch.StartNew();
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase("InMemoryDb"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnection"))
+);
 
 builder.Services.AddScoped<IUUIDRepository, UUIDRepository>();
 builder.Services.AddScoped<IHelloService, HelloService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    dbContext.Database.EnsureCreated();
+}
 
 app.MapGet("/hello", async (IHelloService helloService) =>
 {
