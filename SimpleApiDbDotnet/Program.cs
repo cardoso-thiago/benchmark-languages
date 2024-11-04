@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using SimpleApiDbDotnet.Data;
+using SimpleApiDbDotnet.Models;
 using SimpleApiDbDotnet.Repositories;
 using SimpleApiDbDotnet.Services;
 
@@ -13,6 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IUUIDRepository, UUIDRepository>();
 builder.Services.AddScoped<IHelloService, HelloService>();
+builder.Services.AddSingleton<IFibonacciService, FibonacciService>();
 
 var app = builder.Build();
 
@@ -26,6 +29,13 @@ app.MapGet("/hello", async (IHelloService helloService) =>
 {
     var result = await helloService.Save();
     return Results.Ok(result);
+});
+
+app.MapPost("/fibonacci", async (IFibonacciService fibonacciService, HttpContext context) =>
+{
+    var request = await context.Request.ReadFromJsonAsync<FibonacciRequest>();
+    var result = fibonacciService.CalculateFibonacci(request!.Number);
+    return Results.Ok(result.ToString());
 });
 
 var processId = Environment.ProcessId;
